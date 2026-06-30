@@ -1,3 +1,13 @@
+/**
+ * PROJECT: SISTEM GUDANG LOGISTIK (QUEUE-BASED)
+ * KONSEP STRUKTUR DATA YANG DIGUNAKAN:
+ * 1. Array (Penyimpanan Utama)
+ * 2. Struct (Penyimpanan Data Majemuk)
+ * 3. Searching (Pencarian Berdasarkan Kode)
+ * 4. Sorting (Pengurutan Alphabetis)
+ * 5. Pointer (Pass-By-Pointer untuk update total data)
+ */
+
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -5,21 +15,16 @@
 
 using namespace std;
 
-/**
- * STRUKTUR DATA: Parallel Arrays
- * Program ini menggunakan dua array yang bekerja secara sejajar (parallel).
- * 1. daftarBarang[]: Menyimpan informasi dasar (Nama, Kode).
- * 2. stokBarang[]: Menyimpan jumlah unit barang.
- * Indeks 'i' pada daftarBarang berkaitan langsung dengan indeks 'i' pada stokBarang.
- */
-
+// KONSEP 2: Struct
+// Menyimpan informasi dasar barang dalam satu tipe data majemuk
 struct Barang
 {
     string namaBarang;
     int codeBarang;
 };
 
-// Fungsi pembantu untuk mencari barang berdasarkan code
+// KONSEP 3: Searching (Helper)
+// Mencari indeks berdasarkan code
 int cariIndeksBerdasarkanCode(Barang daftarBarang[], int totalBarang, int code)
 {
     for (int i = 0; i < totalBarang; i++)
@@ -32,15 +37,13 @@ int cariIndeksBerdasarkanCode(Barang daftarBarang[], int totalBarang, int code)
     return -1;
 }
 
-// Fungsi pembantu untuk memastikan Kode Barang selalu unik di dalam gudang
+// Untuk mengecek keunikan kode agar tidak ada yang duplikat
 bool cekCodeExist(Barang daftarBarang[], int totalBarang, int code)
 {
-    // Menggunakan fungsi cari indeks, jika ketemu (!= -1) berarti exist
     return cariIndeksBerdasarkanCode(daftarBarang, totalBarang, code) != -1;
 }
 
-// Fungsi untuk menjumlahkan seluruh unit barang yang ada di gudang
-// Digunakan untuk mengecek kapasitas total gudang (maksimal 1000)
+// Menghitung total stok secara keseluruhan
 int hitungTotalStok(int stokBarang[], int totalBarang)
 {
     int total = 0;
@@ -51,7 +54,7 @@ int hitungTotalStok(int stokBarang[], int totalBarang)
     return total;
 }
 
-// Fungsi pembantu untuk mencari barang berdasarkan nama (untuk merge stok)
+// Mencari indeks berdasarkan nama (untuk merge stok)
 int cariIndeksBerdasarkanNama(Barang daftarBarang[], int totalBarang, string nama)
 {
     for (int i = 0; i < totalBarang; i++)
@@ -64,23 +67,23 @@ int cariIndeksBerdasarkanNama(Barang daftarBarang[], int totalBarang, string nam
     return -1;
 }
 
-// Prosedur untuk menambah data barang baru
-// Menggunakan POINTER (int *totalBarang) untuk memenuhi konsep ke-5
+/**
+ * IMPLEMENTASI KONSEP QUEUE: ENQUEUE (Tambah Barang)
+ * Barang baru selalu ditambahkan di posisi paling belakang (Indeks Rear).
+ * KONSEP 5: Pointer (int *totalBarang)
+ */
 void tambahBarang(Barang daftarBarang[], int stokBarang[], int *totalBarang)
 {
-    // 1. Cek apakah gudang sudah benar-benar penuh (total 1000 unit)
-    // Menggunakan dereference (*) untuk mengambil nilai dari pointer
     int stokSekarang = hitungTotalStok(stokBarang, *totalBarang);
     
     if (stokSekarang >= 1000) {
-        cout << "Gagal! Gudang sudah mencapai kapasitas maksimal (1000 barang).\n";
+        cout << "Gagal! Gudang (Queue) sudah penuh (Maks 1000 unit).\n";
         return;
     }
 
-    // TAMPILKAN KAPASITAS SISA agar user tahu berapa banyak yang bisa dimasukkan
-    cout << "\n=== Tambah Data Barang ===\n";
+    cout << "\n=== Enqueue (Tambah Data Barang) ===\n";
     cout << "Kapasitas saat ini: " << stokSekarang << " / 1000\n";
-    cout << "Slot tersisa     : " << 1000 - stokSekarang << " barang\n";
+    cout << "Antrian terisi   : " << *totalBarang << " jenis barang\n";
     cout << "---------------------------\n";
 
     string nama;
@@ -90,193 +93,162 @@ void tambahBarang(Barang daftarBarang[], int stokBarang[], int *totalBarang)
     cout << "Nama Barang : ";
     getline(cin, nama);
 
-    // 2. CEK APAKAH BARANG SUDAH ADA (Berdasarkan Nama)
-    // Jika ada, kita cukup menambah stoknya saja tanpa membuat entri baru
+    // Cek duplikasi nama untuk merge stok
     int indexLama = cariIndeksBerdasarkanNama(daftarBarang, *totalBarang, nama);
-    
     if (indexLama != -1) {
-        cout << "PEMBERITAHUAN: Barang '" << nama << "' sudah terdaftar di gudang.\n";
-        cout << "Code Barang : " << daftarBarang[indexLama].codeBarang << endl;
-        cout << "Stok saat ini : " << stokBarang[indexLama] << endl;
-        
+        cout << "Barang sudah ada. Menambah stok ketersediaan...\n";
         cout << "Masukkan jumlah tambahan : ";
         cin >> jumlah;
 
-        // Validasi kapasitas total meskipun hanya menambah stok barang lama
         if (stokSekarang + jumlah > 1000) {
-            cout << "Gagal! Tambahan stok melebihi kapasitas sisa gudang.\n";
-            cout << "Kapasitas tersisa: " << 1000 - stokSekarang << " barang.\n";
+            cout << "Gagal! Melebihi kapasitas total gudang.\n";
             return;
         }
 
         stokBarang[indexLama] += jumlah;
-        cout << "Stok '" << nama << "' berhasil diperbarui.\n";
-        return; // SELESAI: Keluar dari fungsi agar tidak membuat entri baru di bawah
+        cout << "Stok berhasil diperbarui.\n";
+        return;
     }
     
-    // 3. GENERASI KODE UNIK OTOMATIS (Hanya untuk barang yang benar-benar baru)
+    // Generate Code Unik (Otomatis)
     int generatedCode;
     do {
-        generatedCode = rand() % 9000 + 1000; // Angka acak 4 digit (1000-9999)
+        generatedCode = rand() % 9000 + 1000;
     } while (cekCodeExist(daftarBarang, *totalBarang, generatedCode));
 
-    cout << "Code Barang (Otomatis) : " << generatedCode << endl;
-
+    cout << "Code Barang (Generated) : " << generatedCode << endl;
     cout << "Jumlah Barang : ";
     cin >> jumlah;
 
-    // 4. VALIDASI KAPASITAS SISA
     if (stokSekarang + jumlah > 1000) {
-        cout << "Gagal! Jumlah barang melebihi kapasitas sisa gudang.\n";
-        cout << "Kapasitas tersisa: " << 1000 - stokSekarang << " barang.\n";
+        cout << "Gagal! Kapasitas gudang tidak mencukupi.\n";
         return;
     }
 
-    // Memasukkan data ke array pada indeks totalBarang saat ini
+    // Masukkan data ke REAR antrian
     daftarBarang[*totalBarang].namaBarang = nama;
     daftarBarang[*totalBarang].codeBarang = generatedCode;
     stokBarang[*totalBarang] = jumlah;
 
-    // Tambahkan counter total jenis barang (menggunakan dereference pointer)
     (*totalBarang)++;
-    cout << "Barang berhasil ditambahkan sebagai item baru.\n";
+    cout << "Barang masuk ke antrian gudang.\n";
 }
 
-// Prosedur untuk menampilkan seluruh isi gudang
+// Menampilkan seluruh data dalam antrian
 void tampilBarang(Barang daftarBarang[], int stokBarang[], int totalBarang)
 {
     if (totalBarang == 0)
     {
-        cout << "Gudang masih kosong!\n";
+        cout << "Antrian gudang kosong!\n";
         return;
     }
-    cout << "\n=== Daftar Barang di Gudang ===\n";
+    cout << "\n=== Daftar Antrian Gudang ===\n";
     for (int i = 0; i < totalBarang; i++)
     {
-        // i+1 digunakan agar tampilan nomor urut mulai dari 1 (user friendly)
-        cout << i + 1 << ". Nama barang   : " << daftarBarang[i].namaBarang << endl;
-        cout << "   Code barang   : " << daftarBarang[i].codeBarang << endl;
-        cout << "   Jumlah barang : " << stokBarang[i] << endl;
-        cout << "---------------------------\n";
+        cout << i + 1 << ". Nama : " << daftarBarang[i].namaBarang 
+             << " | Code : " << daftarBarang[i].codeBarang 
+             << " | Jumlah : " << stokBarang[i] << endl;
     }
 }
 
-// Prosedur untuk mencari barang berdasarkan code
-// Merupakan implementasi konsep SEARCHING
+// KONSEP 3: Searching (Cari Barang)
 void cariBarang(Barang daftarBarang[], int stokBarang[], int totalBarang)
 {
-    if (totalBarang == 0)
-    {
-        cout << "Gudang masih kosong!\n";
-        return;
-    }
+    if (totalBarang == 0) return;
 
     int code;
-    cout << "Masukkan Code Barang yang ingin dicari : ";
+    cout << "Masukkan Code Barang : ";
     cin >> code;
 
-    // Menggunakan helper function untuk mencari indeks
     int index = cariIndeksBerdasarkanCode(daftarBarang, totalBarang, code);
 
     if (index != -1)
     {
         cout << "\n=== Hasil Pencarian ===\n";
-        cout << "Nama barang   : " << daftarBarang[index].namaBarang << endl;
-        cout << "Code barang   : " << daftarBarang[index].codeBarang << endl;
-        cout << "Jumlah barang : " << stokBarang[index] << endl;
-        cout << "-----------------------\n";
+        cout << "Nama: " << daftarBarang[index].namaBarang << " | Stok: " << stokBarang[index] << endl;
     }
     else
     {
-        cout << "Barang dengan code " << code << " tidak ditemukan.\n";
+        cout << "Barang tidak ditemukan.\n";
     }
 }
 
 /**
- * IMPLEMENTASI KONSEP SORTING: Bubble Sort
- * Mengurutkan barang berdasarkan abjad (Nama Barang).
- * Karena menggunakan parallel array, maka stokBarang juga ikut di-swap saat mengganti daftarBarang.
+ * KONSEP 4: Sorting (Bubble Sort)
+ * Mengurutkan antrian berdasarkan abjad tanpa mengubah nilai stok.
  */
 void urutkanBarang(Barang daftarBarang[], int stokBarang[], int totalBarang)
 {
-    if (totalBarang <= 1)
-    {
-        cout << "Tidak cukup data untuk mengurutkan.\n";
-        return;
-    }
+    if (totalBarang <= 1) return;
 
     for (int i = 0; i < totalBarang - 1; i++)
     {
         for (int j = 0; j < totalBarang - i - 1; j++)
         {
-            // Sorting alfabetis A-Z
             if (daftarBarang[j].namaBarang > daftarBarang[j + 1].namaBarang)
             {
-                // Swap Nama & Code (Struct)
+                // Swap Struct
                 Barang tempB = daftarBarang[j];
                 daftarBarang[j] = daftarBarang[j + 1];
                 daftarBarang[j + 1] = tempB;
 
-                // Swap Stok (juga di-swap agar parallel array konsisten)
+                // Swap Parallel Array (Stok)
                 int tempS = stokBarang[j];
                 stokBarang[j] = stokBarang[j + 1];
                 stokBarang[j + 1] = tempS;
             }
         }
     }
-    cout << "Gudang berhasil diurutkan berdasarkan abjad (A-Z).\n";
+    cout << "Antrian berhasil diurutkan A-Z.\n";
 }
 
-// Prosedur untuk mengambil/mengurangi barang
-// Menggunakan POINTER (int *totalBarang)
+/**
+ * IMPLEMENTASI KONSEP QUEUE: DEQUEUE (Ambil Barang)
+ * Modifikasi Queue: Mengambil barang tertentu (Searchable Queue).
+ * Jika stok habis, dilakukan shifting untuk menjaga kontinuitas antrian.
+ */
 void ambilBarang(Barang daftarBarang[], int stokBarang[], int *totalBarang)
 {
     if (*totalBarang == 0)
     {
-        cout << "Gudang kosong, tidak ada barang yang bisa diambil.\n";
+        cout << "Antrian kosong.\n";
         return;
     }
 
     int code;
-    cout << "Masukkan Code Barang yang akan diambil : ";
+    cout << "Masukkan Code Barang untuk Dequeue : ";
     cin >> code;
 
-    // 1. SEARCHING: Mencari indeks barang berdasarkan kode
     int indexFound = cariIndeksBerdasarkanCode(daftarBarang, *totalBarang, code);
 
     if (indexFound == -1)
     {
-        cout << "Barang dengan code " << code << " tidak ditemukan.\n";
+        cout << "Barang tidak ditemukan.\n";
         return;
     }
 
-    int jumlahAmbil;
-    cout << "Stok saat ini: " << stokBarang[indexFound] << endl;
-    cout << "Masukkan jumlah yang akan diambil : ";
-    cin >> jumlahAmbil;
+    int jumlah;
+    cout << "Stok: " << stokBarang[indexFound] << "\nAmbil berapa : ";
+    cin >> jumlah;
 
-    // 2. VALIDASI JUMLAH
-    if (jumlahAmbil > stokBarang[indexFound])
+    if (jumlah > stokBarang[indexFound])
     {
-        cout << "Gagal! Jumlah yang diambil melebihi stok yang ada.\n";
+        cout << "Stok tidak cukup.\n";
     }
     else
     {
-        stokBarang[indexFound] -= jumlahAmbil;
-        cout << "Berhasil mengambil " << jumlahAmbil << " unit " << daftarBarang[indexFound].namaBarang << ".\n";
+        stokBarang[indexFound] -= jumlah;
+        cout << "Berhasil mengambil barang.\n";
 
-        // 3. PENGHAPUSAN DATA (Jika Stok Habis)
-        // Jika stok menjadi 0, kita menghapus item dengan cara SHIFTING (menggeser elemen)
-        if (stokBarang[indexFound] == 0)
+        if (stokBarang[indexFound] <= 0)
         {
-            cout << "Stok habis, barang '" << daftarBarang[indexFound].namaBarang << "' dihapus dari daftar.\n";
-            // Elemen dari indexFound+1 digeser ke depan (menutup celah yang kosong)
+            cout << "Item keluar dari antrian (Stok Habis).\n";
+            // SHIFTING: Menjaga struktur antrian tetap rapat
             for (int i = indexFound; i < *totalBarang - 1; i++)
             {
                 daftarBarang[i] = daftarBarang[i + 1];
                 stokBarang[i] = stokBarang[i + 1];
             }
-            // Kurangi jumlah jenis barang melalui dereference pointer
             (*totalBarang)--;
         }
     }
@@ -284,39 +256,31 @@ void ambilBarang(Barang daftarBarang[], int stokBarang[], int *totalBarang)
 
 int main()
 {
-    srand(time(0)); // Seed random agar angka yang di-generate selalu berbeda tiap program dijalankan
+    srand(time(0));
     
     int pilihan;
-    // DEKLARASI ARRAY: Konsep ke-1
+    // KONSEP 1: Array (Static Allocation 1000)
     Barang daftarBarang[1000]; 
     int stokBarang[1000];    
     int totalBarang = 0; 
 
     do
     {
-        cout << "\n=== Menu Gudang ===\n";
-        cout << "1. Tambah Barang\n";
-        cout << "2. Tampilkan Barang\n";
-        cout << "3. Ambil Barang\n";
-        cout << "4. Cari Barang\n";
-        cout << "5. Urutkan Barang (A-Z)\n";
+        cout << "\n=== MENU GUDANG (ADJUSTED QUEUE) ===\n";
+        cout << "1. Enqueue (Tambah Barang)\n";
+        cout << "2. Tampilkan Antrian\n";
+        cout << "3. Dequeue (Ambil Barang)\n";
+        cout << "4. Searching (Cari Barang)\n";
+        cout << "5. Sorting (Urutkan A-Z)\n";
         cout << "6. Keluar\n";
-        cout << "Masukkan Pilihan (1-6): ";
+        cout << "Pilihan : ";
         cin >> pilihan;
 
         switch (pilihan)
         {
         case 1:
-            // Pastikan tidak melebihi batas indeks array (1000 slot)
             if (totalBarang < 1000)
-            {
-                // Menggunakan '&' untuk mengirim alamat memori (PASS BY POINTER)
-                tambahBarang(daftarBarang, stokBarang, &totalBarang);
-            }
-            else
-            {
-                cout << "Gudang sudah penuh (batas slot jenis barang tercapai)!\n";
-            }
+                tambahBarang(daftarBarang, stokBarang, &totalBarang); // Pointer concepts
             break;
         case 2:
             tampilBarang(daftarBarang, stokBarang, totalBarang);
@@ -331,10 +295,7 @@ int main()
             urutkanBarang(daftarBarang, stokBarang, totalBarang);
             break;
         case 6:
-            cout << "Program selesai.\n";
-            break;
-        default:
-            cout << "Pilihan tidak valid.\n";
+            cout << "Keluar program.\n";
             break;
         }
     } while (pilihan != 6);
